@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<title>Pissarra de Notes</title>
+<style>
+  :root{
+    --board:#1e3d2f;
+    --board-dark:#163024;
+    --chalk:#eef1e6;
+    --chalk-dim:#c9d2c2;
+    --yellow:#e8c34c;
+    --blue:#7bb8d9;
+    --pink:#e07a92;
+    --wood:#5a3a24;
+    --wood-dark:#432a19;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;height:100%;
+    background:var(--wood-dark);
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    color:var(--chalk);
+    overflow:hidden;
+  }
+
+  .frame{
+    position:relative;
+    width:100%;
+    height:100%;
+    padding:22px;
+    background:
+      linear-gradient(var(--wood-dark),var(--wood-dark)) top/100% 14px no-repeat,
+      linear-gradient(var(--wood-dark),var(--wood-dark)) bottom/100% 14px no-repeat,
+      repeating-linear-gradient(90deg, var(--wood) 0 3px, var(--wood-dark) 3px 6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .board{
+    position:relative;
+    width:min(960px, 100%);
+    height:min(700px, 96vh);
+    background:
+      radial-gradient(ellipse at 20% 15%, rgba(255,255,255,0.05), transparent 40%),
+      radial-gradient(ellipse at 80% 85%, rgba(255,255,255,0.04), transparent 45%),
+      var(--board);
+    border-radius:6px;
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.55), 0 20px 50px rgba(0,0,0,0.5);
+    overflow:hidden;
+  }
+
+  .board-title{
+    position:absolute;
+    top:20px; left:34px;
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-size:1.35rem;
+    opacity:0.95;
+    z-index:3;
+  }
+
+  .screen{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+    padding:34px;
+    text-align:center;
+  }
+  .screen.active{display:flex;}
+
+  #startScreen .subtitle{
+    color:var(--chalk-dim);
+    font-size:0.95rem;
+    max-width:480px;
+    margin-bottom:8px;
+  }
+  .mode-cards{
+    display:flex;
+    gap:22px;
+    margin-top:22px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .mode-card{
+    width:240px;
+    border:2px solid var(--chalk-dim);
+    border-radius:12px;
+    padding:22px 18px;
+    cursor:pointer;
+    background:rgba(255,255,255,0.02);
+    transition: border-color 0.2s, transform 0.1s;
+  }
+  .mode-card:hover{border-color:var(--yellow); transform:translateY(-3px);}
+  .mode-card h3{
+    margin:0 0 10px;
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-weight:normal;
+    font-size:1.3rem;
+  }
+  .mode-card p{
+    margin:0;
+    font-size:0.85rem;
+    color:var(--chalk-dim);
+  }
+
+  .lang-row{
+    margin-top:34px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-size:0.85rem;
+    color:var(--chalk-dim);
+  }
+  .lang-btn{
+    background:transparent;
+    border:1px solid var(--chalk-dim);
+    color:var(--chalk-dim);
+    border-radius:6px;
+    padding:5px 12px;
+    cursor:pointer;
+    font-size:0.85rem;
+  }
+  .lang-btn.active{
+    border-color:var(--yellow);
+    color:var(--yellow);
+  }
+
+  .settings-link{
+    position:absolute;
+    top:20px; right:34px;
+    background:none;
+    border:1px solid var(--chalk-dim);
+    color:var(--chalk-dim);
+    border-radius:6px;
+    padding:6px 14px;
+    cursor:pointer;
+    font-size:0.85rem;
+    z-index:3;
+  }
+  .settings-link:hover{border-color:var(--yellow); color:var(--yellow);}
+
+  .play-controls{
+    position:absolute;
+    top:20px; right:34px;
+    display:flex;
+    gap:10px;
+    z-index:9;
+  }
+  .play-controls button{
+    background:none;
+    border:1px solid var(--chalk-dim);
+    color:var(--chalk-dim);
+    border-radius:6px;
+    padding:6px 14px;
+    cursor:pointer;
+    font-size:0.85rem;
+  }
+  .play-controls button:hover{border-color:var(--yellow); color:var(--yellow);}
+
+  .modal-overlay{
+    position:absolute; inset:0;
+    background:rgba(0,0,0,0.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:30;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-panel{
+    background:var(--board-dark);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px;
+    padding:26px 30px;
+    width:min(400px,88%);
+    position:relative;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .modal-panel h2{
+    margin:0 0 18px;
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-weight:normal;
+    font-size:1.3rem;
+  }
+  .close-x{
+    position:absolute;
+    top:12px; right:14px;
+    background:none;
+    border:none;
+    color:var(--chalk-dim);
+    font-size:1.4rem;
+    line-height:1;
+    cursor:pointer;
+  }
+  .close-x:hover{color:var(--yellow);}
+
+  .rounds-input-row{
+    display:flex; align-items:center; gap:10px; margin-bottom:20px;
+  }
+  .rounds-input-row label{
+    font-size:0.9rem; color:var(--chalk-dim);
+  }
+  .rounds-input-row input{
+    width:80px;
+    padding:8px;
+    border-radius:6px;
+    border:1px solid var(--chalk-dim);
+    background:transparent;
+    color:var(--chalk);
+    font-size:1rem;
+  }
+
+  .btn{
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    padding:9px 22px;
+    border-radius:8px;
+    border:2px solid var(--yellow);
+    background:transparent;
+    color:var(--yellow);
+    cursor:pointer;
+    font-size:1rem;
+  }
+  .btn:hover{background:rgba(232,195,76,0.15);}
+  .btn.secondary{
+    border-color:var(--chalk-dim);
+    color:var(--chalk-dim);
+  }
+  .btn.secondary:hover{border-color:var(--chalk); color:var(--chalk); background:rgba(255,255,255,0.06);}
+
+  #countdownScreen .count-number{
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-size:7rem;
+  }
+
+  #playScreen{
+    justify-content:flex-start;
+    padding-top:70px;
+    position:relative;
+  }
+  .stats-row{
+    display:flex;
+    gap:20px;
+    justify-content:center;
+    flex-wrap:wrap;
+    font-size:0.9rem;
+    color:var(--chalk-dim);
+    margin-bottom:6px;
+  }
+  .stats-row b{color:var(--yellow); font-size:1.05rem;}
+
+  .prompt-label{
+    font-size:0.9rem;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--chalk-dim);
+    margin-top:18px;
+  }
+
+  .note-display{
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-size:6rem;
+    line-height:1;
+    color:var(--chalk);
+    min-height:1.2em;
+    margin:6px 0 18px;
+  }
+
+  .replay-btn{
+    margin:16px 0 8px;
+  }
+
+  .timerwrap{
+    display:none;
+    width:70%;
+    max-width:480px;
+    height:10px;
+    background:rgba(255,255,255,0.08);
+    border-radius:6px;
+    overflow:hidden;
+    margin-bottom:22px;
+  }
+  .timerbar{
+    height:100%;
+    width:100%;
+    background:var(--yellow);
+    transition:width 0.1s linear, background 0.3s;
+  }
+
+  .choices{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:12px;
+    width:100%;
+    max-width:540px;
+  }
+  .choice{
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-size:1.4rem;
+    padding:13px 6px;
+    background:transparent;
+    border:2px solid var(--chalk-dim);
+    border-radius:8px;
+    color:var(--chalk);
+    cursor:pointer;
+    transition: transform 0.08s, border-color 0.2s, background 0.2s;
+  }
+  .choice:hover{border-color:var(--yellow); transform:translateY(-2px);}
+  .choice.correct{background:rgba(123,184,217,0.25); border-color:var(--blue);}
+  .choice.wrong{background:rgba(224,122,146,0.25); border-color:var(--pink);}
+  .choice[disabled]{cursor:default;}
+
+  .feedback-msg{
+    min-height:1.4em;
+    font-size:0.9rem;
+    color:var(--chalk-dim);
+    margin-top:14px;
+  }
+
+  .hint{
+    font-size:0.8rem;
+    color:var(--chalk-dim);
+    opacity:0.7;
+    margin-top:10px;
+  }
+
+  .pause-overlay{
+    position:absolute; inset:0;
+    background:rgba(22,48,36,0.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:16px;
+    z-index:8;
+  }
+  .pause-overlay.active{display:flex;}
+  .pause-overlay .pause-label{
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-size:2rem;
+  }
+
+  #summaryScreen h2{
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-weight:normal;
+    font-size:1.8rem;
+    margin-bottom:10px;
+  }
+  #summaryScreen p{
+    color:var(--chalk-dim);
+    margin-bottom:26px;
+  }
+  .summary-actions{
+    display:flex; gap:16px; flex-wrap:wrap; justify-content:center;
+  }
+
+  .panel{
+    background:var(--board-dark);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px;
+    padding:26px 30px;
+    width:min(440px,88%);
+    position:relative;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .panel h2{
+    margin:0 0 18px;
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-weight:normal;
+    font-size:1.4rem;
+  }
+  .field{margin-bottom:18px;}
+  .field label.field-label{
+    display:block;
+    font-size:0.85rem;
+    color:var(--chalk-dim);
+    margin-bottom:8px;
+  }
+  .opt-group{display:flex; flex-direction:column; gap:8px;}
+  .opt-group label{
+    display:flex; align-items:center; gap:8px;
+    color:var(--chalk); font-size:0.95rem;
+    cursor:pointer;
+  }
+  .timerow{display:flex; align-items:center; gap:10px;}
+  .timerow input[type=range]{flex:1; accent-color:var(--yellow);}
+  .timerow span{min-width:60px; text-align:right; color:var(--yellow); font-weight:bold;}
+  .unlimited{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:0.9rem; color:var(--chalk-dim);}
+
+  .fixed-rounds-input{
+    display:flex; align-items:center; gap:10px; margin-top:8px; margin-left:24px;
+  }
+  .fixed-rounds-input input{
+    width:70px; padding:6px; border-radius:6px;
+    border:1px solid var(--chalk-dim); background:transparent; color:var(--chalk);
+  }
+  .fixed-rounds-input.disabled{opacity:0.4; pointer-events:none;}
+  .subfield{margin-left:0; margin-top:10px; padding-left:14px; border-left:2px solid rgba(255,255,255,0.1);}
+  .subfield.hidden{display:none;}
+  .mode-desc{
+    font-size:0.82rem;
+    color:var(--chalk-dim);
+    margin-top:10px;
+    line-height:1.4;
+  }
+  .listen-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:14px;
+  }
+  .listen-note-btn{
+    font-family:"Comic Sans MS","Segoe Print",cursive;
+    font-size:1.1rem;
+    padding:10px 4px;
+    width:52px;
+    background:transparent;
+    border:2px solid var(--chalk-dim);
+    border-radius:8px;
+    color:var(--chalk);
+    cursor:pointer;
+    transition: transform 0.08s, border-color 0.2s;
+    line-height:1.2;
+  }
+  .listen-note-btn .listen-note-sub{
+    display:block;
+    font-size:0.7rem;
+    opacity:0.65;
+    font-family:"Trebuchet MS","Segoe UI",sans-serif;
+  }
+  .listen-note-btn:hover{border-color:var(--yellow); transform:translateY(-2px);}
+  .listen-hint{
+    font-size:0.8rem;
+    color:var(--chalk-dim);
+    opacity:0.75;
+    margin-top:8px;
+  }
+
+  @media (max-width:600px){
+    .note-display{font-size:4rem;}
+    .choices{grid-template-columns:repeat(2,1fr);}
+    .board-title{font-size:1.05rem;}
+    .mode-card{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="board" id="board">
+    <div class="board-title" id="boardTitle">Pissarra de Notes</div>
+
+    <div class="screen active" id="startScreen">
+      <button class="settings-link" id="gearBtn">Configuració</button>
+      <p class="subtitle" id="startSubtitle">Escull una de les següents opcions</p>
+      <div class="mode-cards">
+        <div class="mode-card" id="timeTrialCard">
+          <h3 id="ttCardTitle">Contrarellotge</h3>
+          <p id="ttCardDesc">Tria quantes rondes vols jugar i respon abans que s'acabi el temps.</p>
+        </div>
+        <div class="mode-card" id="freeCard">
+          <h3 id="fpCardTitle">Pràctica lliure</h3>
+          <p id="fpCardDesc">Practica amb la configuració que decideixis</p>
+        </div>
+        <div class="mode-card" id="listenCard">
+          <h3 id="listenCardTitle">Escolta i aprèn les notes</h3>
+          <p id="listenCardDesc">Escolta cada nota i associa-la amb el seu nom en solfeig tradicional i en xifrat americà.</p>
+        </div>
+      </div>
+      <div class="lang-row">
+        <span class="lbl" id="langLabel">Idioma</span>
+        <button class="lang-btn" data-lang="ca">Català</button>
+        <button class="lang-btn" data-lang="es">Castellà</button>
+        <button class="lang-btn" data-lang="en">Anglès</button>
+      </div>
+    </div>
+
+    <div class="screen" id="countdownScreen">
+      <div class="count-number" id="countNumber">3</div>
+    </div>
+
+    <div class="screen" id="listenScreen">
+      <button class="settings-link" id="listenBackBtn">Torna al menú principal</button>
+      <p class="subtitle" id="listenHint">Fes clic a cada nota per escoltar el seu so.</p>
+      <div class="listen-row" id="listenRow"></div>
+    </div>
+
+    <div class="screen" id="playScreen">
+      <div class="play-controls">
+        <button id="pauseBtn">Pausa</button>
+        <button id="menuDuringPlayBtn">Torna al menú principal</button>
+      </div>
+      <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-label" id="pauseLabel">En pausa</div>
+      </div>
+      <div class="stats-row">
+        <div id="roundStat">Ronda <b id="roundVal">1</b></div>
+        <div id="scoreStat">Encerts <b id="scoreVal">0</b></div>
+        <div id="streakStat">Ratxa <b id="streakVal">0</b></div>
+        <div id="missesStat">Errors <b id="missesVal">0</b></div>
+        <div id="timeStat" style="display:none; cursor:pointer;">Temps <b id="timeVal">0.0s</b> <span id="timeDetail" style="display:none;"></span></div>
+      </div>
+      <div class="prompt-label" id="promptLabel">QUIN ÉS EL SEU EQUIVALENT?</div>
+      <div class="note-display" id="noteDisplay">Do</div>
+      <button class="btn replay-btn" id="replayBtn" style="display:none;">Torna a escoltar</button>
+      <div class="timerwrap"><div class="timerbar" id="timerBar"></div></div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback-msg" id="feedback"></div>
+      <div class="hint" id="hintText">Prem 1–7 al teclat o fes clic en una opció</div>
+    </div>
+
+    <div class="screen" id="summaryScreen">
+      <h2 id="summaryTitle">Ronda acabada</h2>
+      <p id="summaryText">Has encertat 0 de 0</p>
+      <div class="summary-actions">
+        <button class="btn" id="playAgainBtn">Torna a jugar</button>
+        <button class="btn secondary" id="backMenuBtn">Torna al menú principal</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="ttModal">
+      <div class="modal-panel">
+        <button class="close-x" id="ttModalClose">&times;</button>
+        <h2 id="ttModalTitle">Contrarellotge</h2>
+        <div class="rounds-input-row">
+          <label id="ttModalLabel" for="ttRoundsInput">Nombre de rondes</label>
+          <input type="number" id="ttRoundsInput" min="1" max="200" value="15">
+        </div>
+
+        <div class="field">
+          <label class="field-label" id="ttFieldGameStyleLabel">Mode de joc</label>
+          <div class="opt-group">
+            <label><input type="radio" name="ttGameStyle" value="normal" checked> <span id="ttOptNormal">Normal</span></label>
+            <label><input type="radio" name="ttGameStyle" value="hard"> <span id="ttOptHard">Difícil</span></label>
+            <label><input type="radio" name="ttGameStyle" value="expert"> <span id="ttOptExpert">Expert</span></label>
+          </div>
+          <p class="mode-desc" id="ttModeDesc"></p>
+          <div class="subfield" id="ttNormalSub">
+            <div class="opt-group">
+              <label><input type="radio" name="ttDirection" value="solfa2letter"> <span id="ttOptSolfaToLetter">Solfeig → Lletra (Do → C)</span></label>
+              <label><input type="radio" name="ttDirection" value="letter2solfa"> <span id="ttOptLetterToSolfa">Lletra → Solfeig (C → Do)</span></label>
+              <label><input type="radio" name="ttDirection" value="mixed" checked> <span id="ttOptMixed">Mesclat (aleatori cada ronda)</span></label>
+            </div>
+          </div>
+          <div class="subfield hidden" id="ttHardSub">
+            <label class="field-label" id="ttFieldHardTargetLabel">Quin tipus de resposta vols?</label>
+            <div class="opt-group">
+              <label><input type="radio" name="ttHardTarget" value="solfa" checked> <span id="ttOptTargetSolfa">Solfeig (Do, Re, Mi...)</span></label>
+              <label><input type="radio" name="ttHardTarget" value="letter"> <span id="ttOptTargetLetter">Lletra (C, D, E...)</span></label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn" id="ttModalStart">Comença</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="overlay">
+      <div class="panel">
+        <button class="close-x" id="settingsClose">&times;</button>
+        <h2 id="settingsTitle">Configuració</h2>
+
+        <div class="field">
+          <label class="field-label" id="fieldGameStyleLabel">Mode de joc</label>
+          <div class="opt-group">
+            <label><input type="radio" name="freeGameStyle" value="normal" checked> <span id="optNormal">Normal</span></label>
+            <label><input type="radio" name="freeGameStyle" value="hard"> <span id="optHard">Difícil</span></label>
+            <label><input type="radio" name="freeGameStyle" value="expert"> <span id="optExpert">Expert</span></label>
+          </div>
+          <p class="mode-desc" id="freeModeDesc"></p>
+          <div class="subfield" id="freeNormalSub">
+            <div class="opt-group">
+              <label><input type="radio" name="freeDirection" value="solfa2letter"> <span id="optSolfaToLetter">Solfeig → Lletra (Do → C)</span></label>
+              <label><input type="radio" name="freeDirection" value="letter2solfa"> <span id="optLetterToSolfa">Lletra → Solfeig (C → Do)</span></label>
+              <label><input type="radio" name="freeDirection" value="mixed" checked> <span id="optMixed">Mesclat (aleatori cada ronda)</span></label>
+            </div>
+          </div>
+          <div class="subfield hidden" id="freeHardSub">
+            <label class="field-label" id="fieldHardTargetLabel">Quin tipus de resposta vols?</label>
+            <div class="opt-group">
+              <label><input type="radio" name="freeHardTarget" value="solfa" checked> <span id="optTargetSolfa">Solfeig (Do, Re, Mi...)</span></label>
+              <label><input type="radio" name="freeHardTarget" value="letter"> <span id="optTargetLetter">Lletra (C, D, E...)</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" id="fieldTimeLabel">Temps per resposta</label>
+          <div class="timerow">
+            <input type="range" id="timeSlider" min="2" max="30" value="8" step="1">
+            <span id="timeLabel">8 s</span>
+          </div>
+          <div class="unlimited">
+            <input type="checkbox" id="unlimitedCheck">
+            <label for="unlimitedCheck" id="unlimitedLabel">Sense límit de temps</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" id="fieldRoundsLabel">Nombre de rondes (pràctica lliure)</label>
+          <div class="opt-group">
+            <label><input type="radio" name="freerounds" value="infinite" checked> <span id="optInfinite">Infinit (fins que ho aturis)</span></label>
+            <label><input type="radio" name="freerounds" value="fixed"> <span id="optFixed">Nombre fix de rondes</span></label>
+          </div>
+          <div class="fixed-rounds-input disabled" id="freeFixedRow">
+            <input type="number" id="freeFixedInput" min="1" max="200" value="15">
+          </div>
+        </div>
+
+        <div class="panel-actions" style="display:flex; justify-content:flex-end; margin-top:8px;">
+          <button class="btn" id="settingsSave">A jugar!</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PAIRS = [
+  {solfa:"Do",  letter:"C"},
+  {solfa:"Re",  letter:"D"},
+  {solfa:"Mi",  letter:"E"},
+  {solfa:"Fa",  letter:"F"},
+  {solfa:"Sol", letter:"G"},
+  {solfa:"La",  letter:"A"},
+  {solfa:"Si",  letter:"B"}
+];
+
+const NOTE_FREQ = {C:261.63, D:293.66, E:329.63, F:349.23, G:392.00, A:440.00, B:493.88};
+
+const I18N = {
+  ca: {
+    boardTitle:"Pissarra de Notes",
+    startSubtitle:"Escull una de les següents opcions",
+    settingsLink:"Configuració",
+    ttCardTitle:"Contrarellotge",
+    ttCardDesc:"Tria quantes rondes vols jugar i respon abans que s'acabi el temps.",
+    fpCardTitle:"Pràctica lliure",
+    fpCardDesc:"Practica amb la configuració que decideixis",
+    langLabel:"Idioma",
+    ttModalTitle:"Contrarellotge",
+    ttModalLabel:"Nombre de rondes",
+    ttModalStart:"Comença",
+    settingsTitle:"Configuració",
+    fieldModeLabel:"Mode de joc",
+    fieldDirectionLabel:"Direcció",
+    optSolfaToLetter:"Solfeig tradicional → Xifrat americà (Do → C)",
+    optLetterToSolfa:"Xifrat americà → Solfeig tradicional (C → Do)",
+    optMixed:"Mesclat (aleatori cada ronda)",
+    optNormal:"Normal",
+    optHard:"Difícil",
+    optExpert:"Expert",
+    fieldHardTargetLabel:"Quin tipus de resposta vols?",
+    optTargetSolfa:"Solfeig tradicional (Do, Re, Mi...)",
+    optTargetLetter:"Xifrat americà (C, D, E...)",
+    descNormal:"Es mostra una nota escrita (en solfeig tradicional o en xifrat americà) i has de dir el seu equivalent.",
+    descHard:"Sona una nota i has de dir el seu equivalent en el tipus que triïs (solfeig tradicional o xifrat americà).",
+    descExpert:"Sona una nota i has d'endevinar-la: a vegades et demanarà la resposta en solfeig tradicional i a vegades en xifrat americà, a l'atzar.",
+    fieldOrderLabel:"Ordre de les opcions",
+    optOrdered:"Habitual (Do, Re, Mi... / C, D, E...)",
+    optShuffled:"Desordenat (aleatori)",
+    fieldTimeLabel:"Temps per resposta",
+    unlimitedLabel:"Sense límit de temps",
+    fieldRoundsLabel:"Nombre de rondes (pràctica lliure)",
+    optInfinite:"Infinit (fins que ho aturis)",
+    optFixed:"Nombre fix de rondes",
+    listenCardTitle:"Escolta i aprèn les notes",
+    listenCardDesc:"Escolta cada nota i associa-la amb el seu nom en solfeig tradicional i en xifrat americà.",
+    listenHint:"Fes clic a cada nota per escoltar el seu so.",
+    pauseBtn:"Pausa",
+    resumeBtn:"Continua",
+    pausedLabel:"En pausa",
+    replayBtn:"Torna a escoltar",
+    roundLabel:"Ronda",
+    scoreLabel:"Encerts",
+    streakLabel:"Ratxa",
+    missesLabel:"Errors",
+    promptToLetter:"QUIN ÉS EL SEU EQUIVALENT EN XIFRAT AMERICÀ?",
+    promptToSolfa:"QUIN ÉS EL SEU EQUIVALENT EN SOLFEIG TRADICIONAL?",
+    promptListenLetter:"QUINA NOTA HAS ESCOLTAT? RESPON EN XIFRAT AMERICÀ",
+    promptListenSolfa:"QUINA NOTA HAS ESCOLTAT? RESPON EN SOLFEIG TRADICIONAL",
+    hintText:"Prem 1–7 al teclat o fes clic en una opció",
+    feedbackCorrect:"Correcte!",
+    feedbackWrongPrefix:"Incorrecte. Era: ",
+    feedbackTimeoutPrefix:"Se t'ha acabat el temps. Era: ",
+    summaryTitle:"Ronda acabada",
+    summaryText:(s,n)=>`Has encertat ${s} de ${n}`,
+    summaryTimeText:(t)=>`Temps total: ${t} s`,
+    playAgainBtn:"Torna a jugar",
+    backMenuBtn:"Torna al menú principal",
+    countGo:"Comença!",
+    saveBtn:"A jugar!",
+    timeLabelStat:"Temps",
+    timeDetailReal:"temps real",
+    timeDetailPenalty:"penalització"
+  },
+  es: {
+    boardTitle:"Pizarra de Notas",
+    startSubtitle:"Elige un modo de juego para empezar",
+    settingsLink:"Configuración",
+    ttCardTitle:"Contrarreloj",
+    ttCardDesc:"Elige cuántas rondas quieres jugar y responde antes de que se acabe el tiempo.",
+    fpCardTitle:"Práctica libre",
+    fpCardDesc:"Practica con la configuración que decidas",
+    langLabel:"Idioma",
+    ttModalTitle:"Contrarreloj",
+    ttModalLabel:"Número de rondas",
+    ttModalStart:"Empieza",
+    settingsTitle:"Configuración",
+    fieldModeLabel:"Modo de juego",
+    fieldDirectionLabel:"Dirección",
+    optSolfaToLetter:"Solfeo tradicional → Cifrado americano (Do → C)",
+    optLetterToSolfa:"Cifrado americano → Solfeo tradicional (C → Do)",
+    optMixed:"Mezclado (aleatorio cada ronda)",
+    optNormal:"Normal",
+    optHard:"Difícil",
+    optExpert:"Experto",
+    fieldHardTargetLabel:"¿Qué tipo de respuesta quieres?",
+    optTargetSolfa:"Solfeo tradicional (Do, Re, Mi...)",
+    optTargetLetter:"Cifrado americano (C, D, E...)",
+    descNormal:"Se muestra una nota escrita (en solfeo tradicional o en cifrado americano) y debes decir su equivalente.",
+    descHard:"Suena una nota y debes decir su equivalente en el tipo que elijas (solfeo tradicional o cifrado americano).",
+    descExpert:"Suena una nota y debes adivinarla: a veces te pedirá la respuesta en solfeo tradicional y a veces en cifrado americano, al azar.",
+    fieldOrderLabel:"Orden de las opciones",
+    optOrdered:"Habitual (Do, Re, Mi... / C, D, E...)",
+    optShuffled:"Desordenado (aleatorio)",
+    fieldTimeLabel:"Tiempo por respuesta",
+    unlimitedLabel:"Sin límite de tiempo",
+    fieldRoundsLabel:"Número de rondas (práctica libre)",
+    optInfinite:"Infinito (hasta que lo pares)",
+    optFixed:"Número fijo de rondas",
+    listenCardTitle:"Escucha y aprende las notas",
+    listenCardDesc:"Escucha cada nota y asóciala con su nombre en solfeo tradicional y en cifrado americano.",
+    listenHint:"Haz clic en cada nota para escuchar su sonido.",
+    pauseBtn:"Pausa",
+    resumeBtn:"Continuar",
+    pausedLabel:"En pausa",
+    replayBtn:"Vuelve a escuchar",
+    roundLabel:"Ronda",
+    scoreLabel:"Aciertos",
+    streakLabel:"Racha",
+    missesLabel:"Fallos",
+    promptToLetter:"¿CUÁL ES SU EQUIVALENTE EN CIFRADO AMERICANO?",
+    promptToSolfa:"¿CUÁL ES SU EQUIVALENTE EN SOLFEO TRADICIONAL?",
+    promptListenLetter:"¿QUÉ NOTA HAS ESCUCHADO? RESPONDE EN CIFRADO AMERICANO",
+    promptListenSolfa:"¿QUÉ NOTA HAS ESCUCHADO? RESPONDE EN SOLFEO TRADICIONAL",
+    hintText:"Pulsa 1–7 en el teclado, o haz clic en una opción",
+    feedbackCorrect:"¡Correcto!",
+    feedbackWrongPrefix:"Incorrecto. Era: ",
+    feedbackTimeoutPrefix:"Se acabó el tiempo. Era: ",
+    summaryTitle:"Ronda terminada",
+    summaryText:(s,n)=>`Has acertado ${s} de ${n}`,
+    summaryTimeText:(t)=>`Tiempo total: ${t} s`,
+    playAgainBtn:"Vuelve a jugar",
+    backMenuBtn:"Vuelve al menú principal",
+    countGo:"¡Empieza!",
+    saveBtn:"¡A jugar!",
+    timeLabelStat:"Tiempo",
+    timeDetailReal:"tiempo real",
+    timeDetailPenalty:"penalización"
+  },
+  en: {
+    boardTitle:"Note Chalkboard",
+    startSubtitle:"Choose a game mode to begin",
+    settingsLink:"Settings",
+    ttCardTitle:"Time Trial",
+    ttCardDesc:"Choose how many rounds you want to play and answer before time runs out.",
+    fpCardTitle:"Free Practice",
+    fpCardDesc:"Practice with whatever settings you choose",
+    langLabel:"Language",
+    ttModalTitle:"Time Trial",
+    ttModalLabel:"Number of rounds",
+    ttModalStart:"Start",
+    settingsTitle:"Settings",
+    fieldModeLabel:"Quiz mode",
+    fieldDirectionLabel:"Direction",
+    optSolfaToLetter:"Traditional solfège → American letter notation (Do → C)",
+    optLetterToSolfa:"American letter notation → Traditional solfège (C → Do)",
+    optMixed:"Mixed (random each round)",
+    optNormal:"Normal",
+    optHard:"Hard",
+    optExpert:"Expert",
+    fieldHardTargetLabel:"Which answer type do you want?",
+    optTargetSolfa:"Traditional solfège (Do, Re, Mi...)",
+    optTargetLetter:"American letter notation (C, D, E...)",
+    descNormal:"A written note (traditional solfège or American letter notation) is shown and you must say its equivalent.",
+    descHard:"A note sounds and you must say its equivalent in the type you choose (traditional solfège or American letter notation).",
+    descExpert:"A note sounds and you must guess it: sometimes it will ask for the answer in traditional solfège and sometimes in American letter notation, at random.",
+    fieldOrderLabel:"Order of options",
+    optOrdered:"Usual (Do, Re, Mi... / C, D, E...)",
+    optShuffled:"Shuffled (random)",
+    fieldTimeLabel:"Time per answer",
+    unlimitedLabel:"No time limit",
+    fieldRoundsLabel:"Number of rounds (free practice)",
+    optInfinite:"Infinite (until you stop)",
+    optFixed:"Fixed number of rounds",
+    listenCardTitle:"Listen and learn the notes",
+    listenCardDesc:"Listen to each note and match it with its traditional solfège and American letter name.",
+    listenHint:"Click each note to hear its sound.",
+    pauseBtn:"Pause",
+    resumeBtn:"Resume",
+    pausedLabel:"Paused",
+    replayBtn:"Listen again",
+    roundLabel:"Round",
+    scoreLabel:"Correct",
+    streakLabel:"Streak",
+    missesLabel:"Misses",
+    promptToLetter:"WHAT IS ITS AMERICAN LETTER NOTATION EQUIVALENT?",
+    promptToSolfa:"WHAT IS ITS TRADITIONAL SOLFÈGE EQUIVALENT?",
+    promptListenLetter:"WHICH NOTE DID YOU HEAR? ANSWER IN AMERICAN LETTER NOTATION",
+    promptListenSolfa:"WHICH NOTE DID YOU HEAR? ANSWER IN TRADITIONAL SOLFÈGE",
+    hintText:"Press 1–7 on your keyboard, or click an option",
+    feedbackCorrect:"Correct!",
+    feedbackWrongPrefix:"Incorrect. It was: ",
+    feedbackTimeoutPrefix:"Time's up. It was: ",
+    summaryTitle:"Round finished",
+    summaryText:(s,n)=>`You got ${s} out of ${n} correct`,
+    summaryTimeText:(t)=>`Total time: ${t} s`,
+    playAgainBtn:"Play again",
+    backMenuBtn:"Back to main menu",
+    countGo:"Go!",
+    saveBtn:"Let's play!",
+    timeLabelStat:"Time",
+    timeDetailReal:"real time",
+    timeDetailPenalty:"penalty"
+  }
+};
+
+let state = {
+  language: "ca",
+  timeLimit: 8,
+  unlimitedTimer: false,
+  tt: { rounds:15, gameStyle:'normal', quizMode:'mixed', hardTarget:'solfa' },
+  free: { roundsMode:'infinite', fixedRounds:15, gameStyle:'normal', quizMode:'mixed', hardTarget:'solfa' }
+};
+
+let session = {
+  type: null,
+  target: null,
+  config: null,
+  roundIndex: 0,
+  score: 0,
+  streak: 0,
+  misses: 0,
+  startTime: null,
+  penaltySeconds: 0
+};
+
+let current = null;
+let timerId = null;
+let elapsedTimerId = null;
+let remaining = 0;
+let locked = false;
+let paused = false;
+let pauseStart = null;
+let settingsLaunchCallback = null;
+let audioCtx = null;
+
+const boardTitle = document.getElementById('boardTitle');
+const startScreen = document.getElementById('startScreen');
+const playScreen = document.getElementById('playScreen');
+const countNumber = document.getElementById('countNumber');
+
+const noteDisplay = document.getElementById('noteDisplay');
+const promptLabel = document.getElementById('promptLabel');
+const choicesEl = document.getElementById('choices');
+const timerBar = document.getElementById('timerBar');
+const scoreVal = document.getElementById('scoreVal');
+const streakVal = document.getElementById('streakVal');
+const missesVal = document.getElementById('missesVal');
+const roundVal = document.getElementById('roundVal');
+const feedback = document.getElementById('feedback');
+const hintText = document.getElementById('hintText');
+const replayBtn = document.getElementById('replayBtn');
+const timeStat = document.getElementById('timeStat');
+const timeVal = document.getElementById('timeVal');
+const timeDetail = document.getElementById('timeDetail');
+const pauseOverlay = document.getElementById('pauseOverlay');
+const pauseLabel = document.getElementById('pauseLabel');
+const pauseBtn = document.getElementById('pauseBtn');
+const menuDuringPlayBtn = document.getElementById('menuDuringPlayBtn');
+
+const overlay = document.getElementById('overlay');
+const gearBtn = document.getElementById('gearBtn');
+const settingsClose = document.getElementById('settingsClose');
+const settingsSave = document.getElementById('settingsSave');
+const timeSlider = document.getElementById('timeSlider');
+const timeLabel = document.getElementById('timeLabel');
+const unlimitedCheck = document.getElementById('unlimitedCheck');
+const freeFixedRow = document.getElementById('freeFixedRow');
+const freeFixedInput = document.getElementById('freeFixedInput');
+const freeNormalSub = document.getElementById('freeNormalSub');
+const freeHardSub = document.getElementById('freeHardSub');
+const freeModeDesc = document.getElementById('freeModeDesc');
+const listenRow = document.getElementById('listenRow');
+const listenHint = document.getElementById('listenHint');
+
+const ttModal = document.getElementById('ttModal');
+const ttModalClose = document.getElementById('ttModalClose');
+const ttRoundsInput = document.getElementById('ttRoundsInput');
+const ttModalStart = document.getElementById('ttModalStart');
+const ttNormalSub = document.getElementById('ttNormalSub');
+const ttHardSub = document.getElementById('ttHardSub');
+const ttModeDesc = document.getElementById('ttModeDesc');
+
+const timeTrialCard = document.getElementById('timeTrialCard');
+const freeCard = document.getElementById('freeCard');
+const listenCard = document.getElementById('listenCard');
+const listenBackBtn = document.getElementById('listenBackBtn');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const backMenuBtn = document.getElementById('backMenuBtn');
+const summaryTitle = document.getElementById('summaryTitle');
+const summaryText = document.getElementById('summaryText');
+
+function T(key){ return I18N[state.language][key]; }
+
+function applyI18N(){
+  boardTitle.textContent = T('boardTitle');
+  document.getElementById('startSubtitle').textContent = T('startSubtitle');
+  gearBtn.textContent = T('settingsLink');
+  document.getElementById('ttCardTitle').textContent = T('ttCardTitle');
+  document.getElementById('ttCardDesc').textContent = T('ttCardDesc');
+  document.getElementById('fpCardTitle').textContent = T('fpCardTitle');
+  document.getElementById('fpCardDesc').textContent = T('fpCardDesc');
+  document.getElementById('langLabel').textContent = T('langLabel');
+
+  document.getElementById('ttModalTitle').textContent = T('ttModalTitle');
+  document.getElementById('ttModalLabel').textContent = T('ttModalLabel');
+  ttModalStart.textContent = T('ttModalStart');
+  document.getElementById('ttFieldGameStyleLabel').textContent = T('fieldModeLabel');
+  document.getElementById('ttOptNormal').textContent = T('optNormal');
+  document.getElementById('ttOptHard').textContent = T('optHard');
+  document.getElementById('ttOptExpert').textContent = T('optExpert');
+  document.getElementById('ttOptSolfaToLetter').textContent = T('optSolfaToLetter');
+  document.getElementById('ttOptLetterToSolfa').textContent = T('optLetterToSolfa');
+  document.getElementById('ttOptMixed').textContent = T('optMixed');
+  document.getElementById('ttFieldHardTargetLabel').textContent = T('fieldHardTargetLabel');
+  document.getElementById('ttOptTargetSolfa').textContent = T('optTargetSolfa');
+  document.getElementById('ttOptTargetLetter').textContent = T('optTargetLetter');
+
+  document.getElementById('settingsTitle').textContent = T('settingsTitle');
+  document.getElementById('fieldGameStyleLabel').textContent = T('fieldModeLabel');
+  document.getElementById('optNormal').textContent = T('optNormal');
+  document.getElementById('optHard').textContent = T('optHard');
+  document.getElementById('optExpert').textContent = T('optExpert');
+  document.getElementById('optSolfaToLetter').textContent = T('optSolfaToLetter');
+  document.getElementById('optLetterToSolfa').textContent = T('optLetterToSolfa');
+  document.getElementById('optMixed').textContent = T('optMixed');
+  document.getElementById('fieldHardTargetLabel').textContent = T('fieldHardTargetLabel');
+  document.getElementById('optTargetSolfa').textContent = T('optTargetSolfa');
+  document.getElementById('optTargetLetter').textContent = T('optTargetLetter');
+  document.getElementById('fieldTimeLabel').textContent = T('fieldTimeLabel');
+  document.getElementById('unlimitedLabel').textContent = T('unlimitedLabel');
+  document.getElementById('fieldRoundsLabel').textContent = T('fieldRoundsLabel');
+  document.getElementById('optInfinite').textContent = T('optInfinite');
+  document.getElementById('optFixed').textContent = T('optFixed');
+  document.getElementById('listenCardTitle').textContent = T('listenCardTitle');
+  document.getElementById('listenCardDesc').textContent = T('listenCardDesc');
+  listenHint.textContent = T('listenHint');
+  updateModeDesc('tt');
+  updateModeDesc('free');
+
+  pauseBtn.textContent = paused ? T('resumeBtn') : T('pauseBtn');
+  pauseLabel.textContent = T('pausedLabel');
+  menuDuringPlayBtn.textContent = T('backMenuBtn');
+  listenBackBtn.textContent = T('backMenuBtn');
+  replayBtn.textContent = T('replayBtn');
+  hintText.textContent = T('hintText');
+  playAgainBtn.textContent = T('playAgainBtn');
+  backMenuBtn.textContent = T('backMenuBtn');
+  settingsSave.textContent = T('saveBtn');
+  document.getElementById('timeStat').childNodes[0].textContent = T('timeLabelStat')+' ';
+
+  document.getElementById('roundStat').childNodes[0].textContent = T('roundLabel')+' ';
+  document.getElementById('scoreStat').childNodes[0].textContent = T('scoreLabel')+' ';
+  document.getElementById('streakStat').childNodes[0].textContent = T('streakLabel')+' ';
+  document.getElementById('missesStat').childNodes[0].textContent = T('missesLabel')+' ';
+}
+
+document.querySelectorAll('.lang-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    state.language = btn.dataset.lang;
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    applyI18N();
+  });
+});
+document.querySelector('.lang-btn[data-lang="ca"]').classList.add('active');
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function ensureAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playNote(letter){
+  const ctx = ensureAudio();
+  const freq = NOTE_FREQ[letter];
+  const now = ctx.currentTime;
+  const osc1 = ctx.createOscillator();
+  osc1.type = 'triangle';
+  osc1.frequency.value = freq;
+  const osc2 = ctx.createOscillator();
+  osc2.type = 'sine';
+  osc2.frequency.value = freq*2;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.5, now+0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now+1.1);
+  const gain2 = ctx.createGain();
+  gain2.gain.value = 0.18;
+  osc1.connect(gain);
+  osc2.connect(gain2);
+  gain2.connect(gain);
+  gain.connect(ctx.destination);
+  osc1.start(now); osc2.start(now);
+  osc1.stop(now+1.2); osc2.stop(now+1.2);
+}
+
+function toggleSubfields(styleValue, normalSubEl, hardSubEl){
+  normalSubEl.classList.toggle('hidden', styleValue !== 'normal');
+  hardSubEl.classList.toggle('hidden', styleValue !== 'hard');
+}
+
+function updateModeDesc(prefix){
+  const styleValue = document.querySelector('input[name="'+prefix+'GameStyle"]:checked').value;
+  const el = prefix === 'tt' ? ttModeDesc : freeModeDesc;
+  const key = styleValue === 'normal' ? 'descNormal' : (styleValue === 'hard' ? 'descHard' : 'descExpert');
+  el.textContent = T(key);
+}
+
+function renderListenRow(){
+  listenRow.innerHTML = '';
+  PAIRS.forEach(pair=>{
+    const btn = document.createElement('button');
+    btn.className = 'listen-note-btn';
+    btn.innerHTML = pair.solfa + '<span class="listen-note-sub">' + pair.letter + '</span>';
+    btn.addEventListener('click', ()=>{ ensureAudio(); playNote(pair.letter); });
+    listenRow.appendChild(btn);
+  });
+}
+
+listenCard.addEventListener('click', ()=>{
+  ensureAudio();
+  renderListenRow();
+  showScreen('listenScreen');
+});
+listenBackBtn.addEventListener('click', goToMenu);
+
+document.querySelectorAll('input[name="ttGameStyle"]').forEach(r=>{
+  r.addEventListener('change', ()=>{
+    toggleSubfields(document.querySelector('input[name="ttGameStyle"]:checked').value, ttNormalSub, ttHardSub);
+    updateModeDesc('tt');
+  });
+});
+document.querySelectorAll('input[name="freeGameStyle"]').forEach(r=>{
+  r.addEventListener('change', ()=>{
+    toggleSubfields(document.querySelector('input[name="freeGameStyle"]:checked').value, freeNormalSub, freeHardSub);
+    updateModeDesc('free');
+  });
+});
+
+timeTrialCard.addEventListener('click', ()=>{
+  ensureAudio();
+  populateTTModal();
+  ttModal.classList.add('open');
+});
+ttModalClose.addEventListener('click', ()=>{
+  ttModal.classList.remove('open');
+});
+ttModalStart.addEventListener('click', ()=>{
+  let n = parseInt(ttRoundsInput.value);
+  if(!n || n<1) n = 15;
+  state.tt.rounds = n;
+  state.tt.gameStyle = document.querySelector('input[name="ttGameStyle"]:checked').value;
+  state.tt.quizMode = document.querySelector('input[name="ttDirection"]:checked').value;
+  state.tt.hardTarget = document.querySelector('input[name="ttHardTarget"]:checked').value;
+  ttModal.classList.remove('open');
+  startSession('timeTrial', n, {gameStyle:state.tt.gameStyle, quizMode:state.tt.quizMode, hardTarget:state.tt.hardTarget});
+});
+
+function populateTTModal(){
+  ttRoundsInput.value = state.tt.rounds;
+  document.querySelector('input[name="ttGameStyle"][value="'+state.tt.gameStyle+'"]').checked = true;
+  document.querySelector('input[name="ttDirection"][value="'+state.tt.quizMode+'"]').checked = true;
+  document.querySelector('input[name="ttHardTarget"][value="'+state.tt.hardTarget+'"]').checked = true;
+  toggleSubfields(state.tt.gameStyle, ttNormalSub, ttHardSub);
+  updateModeDesc('tt');
+}
+
+freeCard.addEventListener('click', ()=>{
+  ensureAudio();
+  settingsLaunchCallback = ()=>{
+    const target = state.free.roundsMode === 'fixed' ? state.free.fixedRounds : null;
+    startSession('free', target, {gameStyle:state.free.gameStyle, quizMode:state.free.quizMode, hardTarget:state.free.hardTarget});
+  };
+  populateSettingsForm();
+  overlay.classList.add('open');
+});
+
+function populateSettingsForm(){
+  document.querySelector('input[name="freeGameStyle"][value="'+state.free.gameStyle+'"]').checked = true;
+  document.querySelector('input[name="freeDirection"][value="'+state.free.quizMode+'"]').checked = true;
+  document.querySelector('input[name="freeHardTarget"][value="'+state.free.hardTarget+'"]').checked = true;
+  toggleSubfields(state.free.gameStyle, freeNormalSub, freeHardSub);
+  updateModeDesc('free');
+  timeSlider.value = state.timeLimit;
+  timeLabel.textContent = state.timeLimit + ' s';
+  unlimitedCheck.checked = state.unlimitedTimer;
+  timeSlider.disabled = state.unlimitedTimer;
+  timeSlider.style.opacity = state.unlimitedTimer ? 0.4 : 1;
+  document.querySelector('input[name="freerounds"][value="'+state.free.roundsMode+'"]').checked = true;
+  freeFixedInput.value = state.free.fixedRounds;
+  freeFixedRow.classList.toggle('disabled', state.free.roundsMode !== 'fixed');
+}
+
+function startSession(type, target, config){
+  session.type = type;
+  session.target = target;
+  session.config = config;
+  session.roundIndex = 0;
+  session.score = 0;
+  session.streak = 0;
+  session.misses = 0;
+  session.penaltySeconds = 0;
+  session.startTime = null;
+  paused = false;
+  timeDetailVisible = false;
+  timeDetail.style.display = 'none';
+  timeStat.style.display = (type === 'timeTrial') ? '' : 'none';
+  runCountdown();
+}
+
+function runCountdown(){
+  showScreen('countdownScreen');
+  let n = 3;
+  countNumber.textContent = n;
+  const iv = setInterval(()=>{
+    n--;
+    if(n>0){
+      countNumber.textContent = n;
+    } else if(n===0){
+      countNumber.textContent = T('countGo');
+    } else {
+      clearInterval(iv);
+      showScreen('playScreen');
+      pauseOverlay.classList.remove('active');
+      pauseBtn.textContent = T('pauseBtn');
+      if(session.type === 'timeTrial'){
+        session.startTime = Date.now();
+        clearInterval(elapsedTimerId);
+        elapsedTimerId = setInterval(updateTimeDisplay, 100);
+        updateTimeDisplay();
+      }
+      newRound();
+    }
+  }, 1000);
+}
+
+let timeDetailVisible = false;
+
+function updateTimeDisplay(){
+  const realSeconds = (Date.now() - session.startTime)/1000;
+  const elapsed = realSeconds + session.penaltySeconds;
+  timeVal.textContent = elapsed.toFixed(1) + 's';
+  if(timeDetailVisible){
+    timeDetail.textContent = '('+T('timeDetailReal')+': '+realSeconds.toFixed(1)+'s + '+T('timeDetailPenalty')+': '+session.penaltySeconds.toFixed(1)+'s)';
+  }
+}
+
+timeStat.addEventListener('click', ()=>{
+  timeDetailVisible = !timeDetailVisible;
+  timeDetail.style.display = timeDetailVisible ? '' : 'none';
+  if(timeDetailVisible && session.startTime) updateTimeDisplay();
+});
+
+function flashPenalty(){
+  const span = document.createElement('span');
+  span.textContent = '+3s';
+  span.style.color = 'var(--pink)';
+  span.style.marginLeft = '8px';
+  span.style.fontWeight = 'bold';
+  timeStat.appendChild(span);
+  setTimeout(()=>span.remove(), 1200);
+}
+
+function resolveRoundMode(config){
+  if(config.gameStyle === 'normal'){
+    if(config.quizMode === 'mixed') return Math.random()<0.5 ? 'solfa2letter':'letter2solfa';
+    return config.quizMode;
+  }
+  if(config.gameStyle === 'hard'){
+    return config.hardTarget === 'letter' ? 'solfa2letter' : 'letter2solfa';
+  }
+  return Math.random()<0.5 ? 'solfa2letter':'letter2solfa';
+}
+
+function updateStatsDisplay(){
+  roundVal.textContent = session.target ? (session.roundIndex+' / '+session.target) : session.roundIndex;
+  scoreVal.textContent = session.score;
+  streakVal.textContent = session.streak;
+  missesVal.textContent = session.misses;
+}
+
+function newRound(){
+  locked = false;
+  clearInterval(timerId);
+  timerBar.style.background = 'var(--yellow)';
+  feedback.textContent = '';
+  session.roundIndex++;
+  updateStatsDisplay();
+
+  const pair = PAIRS[Math.floor(Math.random()*PAIRS.length)];
+  const roundMode = resolveRoundMode(session.config);
+  const isAudio = session.config.gameStyle !== 'normal';
+
+  let answer, pool;
+  if(roundMode === 'solfa2letter'){
+    answer = pair.letter;
+    pool = PAIRS.map(p=>p.letter);
+  } else {
+    answer = pair.solfa;
+    pool = PAIRS.map(p=>p.solfa);
+  }
+
+  current = {answer, letterForSound: pair.letter};
+
+  if(isAudio){
+    noteDisplay.style.display = 'none';
+    replayBtn.style.display = '';
+    promptLabel.textContent = roundMode==='solfa2letter' ? T('promptListenLetter') : T('promptListenSolfa');
+    playNote(pair.letter);
+  } else {
+    noteDisplay.style.display = '';
+    replayBtn.style.display = 'none';
+    noteDisplay.textContent = roundMode==='solfa2letter' ? pair.solfa : pair.letter;
+    promptLabel.textContent = roundMode==='solfa2letter' ? T('promptToLetter') : T('promptToSolfa');
+  }
+
+  choicesEl.innerHTML = '';
+  pool.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = opt;
+    btn.dataset.value = opt;
+    btn.addEventListener('click', ()=>handleAnswer(opt, btn));
+    choicesEl.appendChild(btn);
+  });
+
+  if(state.unlimitedTimer || session.type === 'timeTrial'){
+    timerBar.parentElement.style.display = 'none';
+    return;
+  }
+  timerBar.parentElement.style.display = 'block';
+  startAnswerTimer();
+}
+
+function startAnswerTimer(){
+  remaining = state.timeLimit;
+  timerBar.style.width = '100%';
+  timerId = setInterval(tickTimer, 100);
+}
+
+function tickTimer(){
+  remaining -= 0.1;
+  const pct = Math.max(0, (remaining/state.timeLimit)*100);
+  timerBar.style.width = pct+'%';
+  if(pct < 30) timerBar.style.background = 'var(--pink)';
+  if(remaining<=0){
+    clearInterval(timerId);
+    handleTimeout();
+  }
+}
+
+function highlightCorrect(){
+  [...choicesEl.children].forEach(btn=>{
+    btn.disabled = true;
+    if(btn.dataset.value === current.answer) btn.classList.add('correct');
+  });
+}
+
+function afterRound(delay){
+  setTimeout(()=>{
+    if(session.target && session.roundIndex >= session.target){
+      showSummary();
+    } else {
+      newRound();
+    }
+  }, delay);
+}
+
+function handleTimeout(){
+  if(locked) return;
+  locked = true;
+  session.streak = 0;
+  session.misses++;
+  if(session.type === 'timeTrial'){ session.penaltySeconds += 3; flashPenalty(); }
+  feedback.textContent = T('feedbackTimeoutPrefix')+current.answer;
+  highlightCorrect();
+  afterRound(700);
+}
+
+function handleAnswer(opt, btn){
+  if(locked || paused) return;
+  locked = true;
+  clearInterval(timerId);
+
+  const correct = opt === current.answer;
+  [...choicesEl.children].forEach(b=>b.disabled = true);
+
+  if(correct){
+    btn.classList.add('correct');
+    session.score++;
+    session.streak++;
+    feedback.textContent = T('feedbackCorrect');
+    afterRound(450);
+  } else {
+    btn.classList.add('wrong');
+    session.streak = 0;
+    session.misses++;
+    if(session.type === 'timeTrial'){ session.penaltySeconds += 3; flashPenalty(); }
+    feedback.textContent = T('feedbackWrongPrefix')+current.answer;
+    highlightCorrect();
+    afterRound(700);
+  }
+}
+
+replayBtn.addEventListener('click', ()=>{
+  if(locked || paused || !current) return;
+  playNote(current.letterForSound);
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(!playScreen.classList.contains('active') || paused) return;
+  const n = parseInt(e.key);
+  if(n>=1 && n<=7){
+    const btn = choicesEl.children[n-1];
+    if(btn && !btn.disabled) handleAnswer(btn.dataset.value, btn);
+  }
+});
+
+pauseBtn.addEventListener('click', ()=>{
+  if(!paused) doPause(); else doResume();
+});
+
+function doPause(){
+  paused = true;
+  pauseStart = Date.now();
+  clearInterval(timerId);
+  clearInterval(elapsedTimerId);
+  pauseOverlay.classList.add('active');
+  pauseBtn.textContent = T('resumeBtn');
+}
+
+function doResume(){
+  paused = false;
+  const pausedMs = Date.now() - pauseStart;
+  if(session.type === 'timeTrial' && session.startTime){
+    session.startTime += pausedMs;
+  }
+  pauseOverlay.classList.remove('active');
+  pauseBtn.textContent = T('pauseBtn');
+  if(!locked && !state.unlimitedTimer && session.type !== 'timeTrial'){
+    timerId = setInterval(tickTimer, 100);
+  }
+  if(session.type === 'timeTrial'){
+    elapsedTimerId = setInterval(updateTimeDisplay, 100);
+  }
+}
+
+menuDuringPlayBtn.addEventListener('click', ()=>{
+  clearInterval(timerId);
+  clearInterval(elapsedTimerId);
+  paused = false;
+  pauseOverlay.classList.remove('active');
+  goToMenu();
+});
+
+function showSummary(){
+  clearInterval(timerId);
+  clearInterval(elapsedTimerId);
+  summaryTitle.textContent = T('summaryTitle');
+  let txt = T('summaryText')(session.score, session.target);
+  if(session.type === 'timeTrial'){
+    const realSeconds = (Date.now() - session.startTime)/1000;
+    const totalSeconds = (realSeconds + session.penaltySeconds).toFixed(1);
+    txt += ' — ' + T('summaryTimeText')(totalSeconds) + ' (' + T('timeDetailReal') + ': ' + realSeconds.toFixed(1) + 's + ' + T('timeDetailPenalty') + ': ' + session.penaltySeconds.toFixed(1) + 's)';
+  }
+  summaryText.textContent = txt;
+  showScreen('summaryScreen');
+}
+
+playAgainBtn.addEventListener('click', ()=>{
+  startSession(session.type, session.target, session.config);
+});
+backMenuBtn.addEventListener('click', goToMenu);
+
+function goToMenu(){
+  clearInterval(timerId);
+  clearInterval(elapsedTimerId);
+  showScreen('startScreen');
+}
+
+gearBtn.addEventListener('click', ()=>{
+  settingsLaunchCallback = null;
+  populateSettingsForm();
+  overlay.classList.add('open');
+});
+settingsClose.addEventListener('click', ()=>{
+  settingsLaunchCallback = null;
+  overlay.classList.remove('open');
+});
+settingsSave.addEventListener('click', ()=>{
+  state.free.gameStyle = document.querySelector('input[name="freeGameStyle"]:checked').value;
+  state.free.quizMode = document.querySelector('input[name="freeDirection"]:checked').value;
+  state.free.hardTarget = document.querySelector('input[name="freeHardTarget"]:checked').value;
+  state.timeLimit = parseInt(timeSlider.value);
+  state.unlimitedTimer = unlimitedCheck.checked;
+  state.free.roundsMode = document.querySelector('input[name="freerounds"]:checked').value;
+  let fr = parseInt(freeFixedInput.value);
+  if(!fr || fr<1) fr = 15;
+  state.free.fixedRounds = fr;
+  overlay.classList.remove('open');
+  if(settingsLaunchCallback){
+    const cb = settingsLaunchCallback;
+    settingsLaunchCallback = null;
+    cb();
+  }
+});
+
+timeSlider.addEventListener('input', ()=>{
+  timeLabel.textContent = timeSlider.value + ' s';
+});
+unlimitedCheck.addEventListener('change', ()=>{
+  timeSlider.disabled = unlimitedCheck.checked;
+  timeSlider.style.opacity = unlimitedCheck.checked ? 0.4 : 1;
+});
+document.querySelectorAll('input[name="freerounds"]').forEach(r=>{
+  r.addEventListener('change', ()=>{
+    const isFixed = document.querySelector('input[name="freerounds"]:checked').value === 'fixed';
+    freeFixedRow.classList.toggle('disabled', !isFixed);
+  });
+});
+
+applyI18N();
+</script>
+
+</body>
+</html>
