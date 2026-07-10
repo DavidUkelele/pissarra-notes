@@ -509,9 +509,9 @@
       </div>
       <div class="lang-row">
         <span class="lbl" id="langLabel">Idioma</span>
-        <button class="lang-btn" data-lang="ca">Català</button>
-        <button class="lang-btn" data-lang="es">Castellà</button>
-        <button class="lang-btn" data-lang="en">Anglès</button>
+        <button class="lang-btn" id="langLabelcat" data-lang="ca">Català</button>
+        <button class="lang-btn" id="langLabelcast" data-lang="es">Castellà</button>
+        <button class="lang-btn" id="langLabeleng" data-lang="en">Anglès</button>
       </div>
     </div>
 
@@ -679,6 +679,9 @@ const I18N = {
     fpCardTitle:"Pràctica lliure",
     fpCardDesc:"Practica amb la configuració que decideixis",
     langLabel:"Idioma",
+    langLabelcat:"Català",
+    langLabelcast:"Castellà",
+    langLabeleng:"Anglés",
     ttModalTitle:"Contrarellotge",
     ttModalLabel:"Nombre de rondes",
     ttModalStart:"Comença",
@@ -744,6 +747,9 @@ const I18N = {
     fpCardTitle:"Práctica libre",
     fpCardDesc:"Practica con la configuración que decidas",
     langLabel:"Idioma",
+    langLabelcat:"Catalán",
+    langLabelcast:"Castellano",
+    langLabeleng:"Inglés",
     ttModalTitle:"Contrarreloj",
     ttModalLabel:"Número de rondas",
     ttModalStart:"Empieza",
@@ -809,6 +815,9 @@ const I18N = {
     fpCardTitle:"Free Practice",
     fpCardDesc:"Practice with whatever settings you choose",
     langLabel:"Language",
+    langLabelcat:"Catalan",
+    langLabelcast:"Spanish",
+    langLabeleng:"English",
     ttModalTitle:"Time Trial",
     ttModalLabel:"Number of rounds",
     ttModalStart:"Start",
@@ -962,6 +971,9 @@ function applyI18N(){
   document.getElementById('fpCardTitle').textContent = T('fpCardTitle');
   document.getElementById('fpCardDesc').textContent = T('fpCardDesc');
   document.getElementById('langLabel').textContent = T('langLabel');
+  document.getElementById('langLabelcat').textContent = T('langLabelcat');
+  document.getElementById('langLabelcast').textContent = T('langLabelcast');
+  document.getElementById('langLabeleng').textContent = T('langLabeleng');
 
   document.getElementById('ttModalTitle').textContent = T('ttModalTitle');
   document.getElementById('ttModalLabel').textContent = T('ttModalLabel');
